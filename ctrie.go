@@ -5,13 +5,13 @@ import "fmt"
 type NodeType uint8
 
 const (
-	NodeTypeRoot    NodeType = 0
-	NodeTypeLeaf    NodeType = 2
+	NodeTypeRoot    NodeType = 0 //root node
+	NodeTypeLeaf    NodeType = 2 //Leaf node
 	NodeTypeDefault NodeType = 1
 )
 
 type CTrie struct {
-	childrenIdx map[byte]*CTrie
+	childrenIdx map[byte]*CTrie //index of children nodes: index by the remain path's first char
 	Size        int
 
 	LeafValue interface{}
@@ -35,12 +35,13 @@ func min(a, b int) int {
 	return b
 }
 
+// Add new path to the tree binded by value
 func (ct *CTrie) Add(str string, value interface{}) {
 	ct.Size++
 	if len(ct.path) > 0 || len(ct.childrenIdx) > 0 {
-	loopStart:
+	loopStart: //Loop start, instead of recursive calls
 		for {
-			diffSt := 0
+			diffSt := 0 //the start pos of first diff between str and ct.path
 			minLen := min(len(ct.path), len(str))
 			for diffSt < minLen && str[diffSt] == ct.path[diffSt] {
 				diffSt++
@@ -71,12 +72,12 @@ func (ct *CTrie) Add(str string, value interface{}) {
 				ct.LeafValue = nil
 			}
 
-			if diffSt < len(str) { //str has diff
+			if diffSt < len(str) { //str has diff (might ct has splitted)
 				str = str[diffSt:]
 				c := str[0]
 
 				sub, existed := ct.childrenIdx[c]
-				if existed {
+				if existed { //sub with c first exists
 					ct = sub
 					continue loopStart
 				}
@@ -93,7 +94,7 @@ func (ct *CTrie) Add(str string, value interface{}) {
 				}
 				ct.childrenIdx[c] = child
 				return
-			} else if diffSt == len(str) {
+			} else if diffSt == len(str) { //the path matches
 				if ct.LeafValue == nil {
 					ct.LeafValue = value
 					if ct.nodeType != NodeTypeRoot {
